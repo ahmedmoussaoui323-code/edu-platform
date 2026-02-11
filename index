@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة تمارين الثانوي</title>
+
+<style>
+body{
+font-family: Arial;
+background: linear-gradient(to right,#4e73df,#1cc88a);
+text-align:center;
+color:white;
+margin:0;
+padding:0;
+}
+.container{
+margin:40px auto;
+max-width: 400px;
+background: rgba(0,0,0,0.3);
+padding:20px;
+border-radius:10px;
+}
+input, select{
+padding:10px;
+margin:5px;
+width:80%;
+}
+button{
+padding:10px 20px;
+margin:5px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+.hidden{
+display:none;
+}
+h1,h2,h3{
+margin:10px 0;
+}
+.exercise{
+margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1 id="title">📘 منصة تمارين الثانوي</h1>
+
+<button onclick="setLang('ar')">العربية</button>
+<button onclick="setLang('en')">English</button>
+
+<!-- تسجيل حساب -->
+<div id="register">
+<h2 id="regTitle">إنشاء حساب</h2>
+<input type="text" id="regUser" placeholder="اسم المستخدم"><br>
+<input type="password" id="regPass" placeholder="كلمة المرور"><br>
+<button onclick="register()">تسجيل</button>
+</div>
+
+<!-- تسجيل دخول -->
+<div id="login" class="hidden">
+<h2 id="logTitle">تسجيل الدخول</h2>
+<input type="text" id="logUser" placeholder="اسم المستخدم"><br>
+<input type="password" id="logPass" placeholder="كلمة المرور"><br>
+<button onclick="login()">دخول</button>
+</div>
+
+<!-- صفحة التمارين -->
+<div id="dashboard" class="hidden">
+<h2 id="exerciseTitle">اختر المادة:</h2>
+<select id="subject" onchange="loadExercise()">
+<option value="math">رياضيات</option>
+<option value="physics">فيزياء</option>
+<option value="chem">كيمياء</option>
+</select>
+
+<div class="exercise">
+<p id="question"></p>
+<input type="text" id="answer" placeholder="إجابتك هنا">
+<br>
+<button onclick="checkAnswer()">تحقق</button>
+<p id="result"></p>
+<p id="score">النقاط: 0</p>
+</div>
+
+<h3 id="leaderTitle">ترتيب الطلاب</h3>
+<ul id="leaderboard"></ul>
+
+<button onclick="logout()">تسجيل الخروج</button>
+</div>
+
+</div>
+
+<script>
+// البيانات
+let currentLang="ar";
+let score=0;
+let currentQuestion={};
+let currentSubject="math";
+let students=[];
+
+// تمارين لكل مادة (أكثر من 5 لكل مادة كمثال)
+let exercises={
+math:[
+{q:"5 × 3 = ?", a:"15"},
+{q:"12 ÷ 4 = ?", a:"3"},
+{q:"7 + 8 = ?", a:"15"},
+{q:"10 - 6 = ?", a:"4"},
+{q:"9 × 2 = ?", a:"18"},
+{q:"14 ÷ 7 = ?", a:"2"}
+],
+physics:[
+{q:"قوة = كتلة × تسارع. احسب القوة إذا كانت الكتلة 2kg والتسارع 5m/s²؟", a:"10"},
+{q:"سرعة الضوء ≈ 3 × 10^8 m/s. اكتب الرقم 3×10^8", a:"3e8"},
+{q:"الجاذبية ≈ 9.8 m/s²", a:"9.8"}
+],
+chem:[
+{q:"H2O هي صيغة؟ 1 للماء", a:"1"},
+{q:"NaCl هي؟ 1 للملح", a:"1"},
+{q:"CO2 هو ثاني أكسيد الكربون؟ 1 نعم", a:"1"}
+]
+};
+
+// اللغة
+function setLang(lang){
+currentLang=lang;
+if(lang==="en"){
+title.innerText="📘 High School Exercise Platform";
+regTitle.innerText="Create Account";
+logTitle.innerText="Login";
+exerciseTitle.innerText="Choose Subject:";
+leaderTitle.innerText="Leaderboard";
+scoreText();
+loadExercise();
+}else{
+title.innerText="📘 منصة تمارين الثانوي";
+regTitle.innerText="إنشاء حساب";
+logTitle.innerText="تسجيل الدخول";
+exerciseTitle.innerText="اختر المادة:";
+leaderTitle.innerText="ترتيب الطلاب";
+scoreText();
+loadExercise();
+}
+}
+
+// نقاط
+function scoreText(){
+if(currentLang==="en"){
+document.getElementById("score").innerText="Score: "+score;
+}else{
+document.getElementById("score").innerText="النقاط: "+score;
+}
+}
+
+// تسجيل حساب
+function register(){
+let user=document.getElementById("regUser").value;
+let pass=document.getElementById("regPass").value;
+
+if(user && pass){
+localStorage.setItem("user",user);
+localStorage.setItem("pass",pass);
+localStorage.setItem("score",0);
+alert(currentLang==="en"?"Account created!":"تم إنشاء الحساب");
+document.getElementById("register").classList.add("hidden");
+document.getElementById("login").classList.remove("hidden");
+}
+}
+
+// تسجيل دخول
+function login(){
+let user=document.getElementById("logUser").value;
+let pass=document.getElementById("logPass").value;
+
+if(user===localStorage.getItem("user") && pass===localStorage.getItem("pass")){
+document.getElementById("login").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+score=parseInt(localStorage.getItem("score"));
+loadExercise();
+updateLeaderboard();
+}else{
+alert(currentLang==="en"?"Wrong info":"معلومات خاطئة");
+}
+}
+
+// تحميل تمرين عشوائي
+function loadExercise(){
+currentSubject=document.getElementById("subject").value;
+let list=exercises[currentSubject];
+currentQuestion=list[Math.floor(Math.random()*list.length)];
+document.getElementById("question").innerText=currentQuestion.q;
+document.getElementById("answer").value="";
+document.getElementById("result").innerText="";
+}
+
+// تحقق من الإجابة
+function checkAnswer(){
+let ans=document.getElementById("answer").value.trim();
+if(ans===currentQuestion.a){
+score+=10;
+localStorage.setItem("score",score);
+document.getElementById("result").innerText=currentLang==="en"?"Correct!":"إجابة صحيحة!";
+}else{
+document.getElementById("result").innerText=currentLang==="en"?"Try again":"حاول مرة أخرى";
+}
+scoreText();
+updateLeaderboard();
+}
+
+// تسجيل خروج
+function logout(){
+location.reload();
+}
+
+// لوحة الترتيب
+function updateLeaderboard(){
+students=[];
+let user=localStorage.getItem("user");
+let userScore=parseInt(localStorage.getItem("score")||0);
+students.push({name:user, score:userScore});
+students.sort((a,b)=>b.score-a.score);
+let html="";
+for(let s of students){
+html+="<li>"+s.name+": "+s.score+"</li>";
+}
+document.getElementById("leaderboard").innerHTML=html;
+}
+
+</script>
+
+</body>
+</html>
